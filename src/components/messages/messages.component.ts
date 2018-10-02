@@ -28,7 +28,9 @@ const MessagesComponent: ng.IComponentOptions = {
   controller: function(
     $state: StateService,
     NotificationService: NotificationService,
-    MessageService: MessageService
+    MessageService: MessageService,
+    $mdEditDialog,
+    $mdDialog: angular.material.IDialogService
   ) {
     'ngInject';
 
@@ -36,33 +38,51 @@ const MessagesComponent: ng.IComponentOptions = {
       this.roles = _.sortBy(this.resolvedRoles, ["name"]);
       this.channels = [
         {id: "PORTAL", name: "Portal Notifications"},
-        {id: "MAIL", name: "Email"}
+        {id: "MAIL", name: "Email"},
+        {id: "HTTP", name: "POST HTTP message"}
       ];
       this.channel = "PORTAL";
+      this.httpHeaders = [];
+      this.newHttpHeader();
     };
 
     this.send = () => {
       const title = this.title;
+      const url = this.url;
       const text = this.text;
       const channel = this.channel;
       const roleScope = this.resolvedScope;
       const roleValues = [this.role];
       if (this.resolvedApiId) {
         MessageService
-          .sendFromApi(this.resolvedApiId, title, text, channel, roleScope, roleValues)
+          .sendFromApi(this.resolvedApiId, title, text, channel, roleScope, roleValues, url, this.httpHeaders)
           .then( (response) => {
             NotificationService.show(response.data + ' messages has been sent.');
           });
       } else {
         MessageService
-          .sendFromPortal(title, text, channel, roleScope, roleValues)
+          .sendFromPortal(title, text, channel, roleScope, roleValues, url, this.httpHeaders)
           .then( (response) => {
             NotificationService.show(response.data + ' messages has been sent.');
           });
       }
       this.title = "";
+      this.url = "";
       this.text = "";
+      this.httpHeaders = [];
+      this.newHttpHeader();
       this.formMsg.$setPristine();
+    };
+
+    this.newHttpHeader = () => {
+      this.httpHeaders.push({
+        key: "",
+        value: ""
+      })
+    };
+
+    this.deleteHttpHeader = (idx) => {
+      this.httpHeaders.splice(idx, 1);
     }
   }
 };
